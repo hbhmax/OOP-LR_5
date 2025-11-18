@@ -36,7 +36,4 @@ DynamicListMemoryResource::~DynamicListMemoryResource() {
     for (const auto& block : allocated_blocks) {
         ::operator delete(block.ptr, std::align_val_t{block.alignment});
     }
-    for (const auto& block : free_blocks) {
-        ::operator delete(block.ptr, std::align_val_t{block.alignment});
-    }
 }

@@ -10,9 +10,10 @@ private:
     struct Node {
         T value;
         Node* next = nullptr;
-        
+
         template<typename U>
-        Node(U&& val, Node* n) : value(std::forward<U>(val)), next(n) {}
+        Node(U&& val, Node* n) 
+            : value(std::forward<U>(val)), next(n) {}
     };
 
     using allocator_type = std::pmr::polymorphic_allocator<Node>;
@@ -23,7 +24,8 @@ public:
     using value_type = T;
 
     forward_list() : alloc(std::pmr::get_default_resource()) {}
-    explicit forward_list(std::pmr::memory_resource* res) : alloc(res) {}
+
+    explicit forward_list(std::pmr::memory_resource* res): alloc(res) {}
 
     ~forward_list() {
         clear();
@@ -52,8 +54,13 @@ public:
 
         iterator(Node* node = nullptr) : current(node) {}
 
-        reference operator*() const { return current->value; }
-        pointer operator->() const { return &current->value; }
+        reference operator*() const {
+            return current->value;
+        }
+
+        pointer operator->() const {
+            return &current->value;
+        }
 
         iterator& operator++() {
             current = current->next;
@@ -66,21 +73,51 @@ public:
             return tmp;
         }
 
-        bool operator==(const iterator& other) const { return current == other.current; }
-        bool operator!=(const iterator& other) const { return current != other.current; }
+        bool operator==(const iterator& other) const {
+            return current == other.current;
+        }
+
+        bool operator!=(const iterator& other) const {
+            return current != other.current;
+        }
     };
 
-    iterator begin() { return iterator(head); }
-    iterator end() { return iterator(nullptr); }
+    iterator begin() {
+        return iterator(head);
+    }
+
+    iterator end() {
+        return iterator(nullptr);
+    }
 
     template<typename U>
     void push_front(U&& value) {
         Node* new_node = alloc.allocate(1);
-        std::allocator_traits<allocator_type>::construct(alloc, new_node, std::forward<U>(value), head);
+        std::allocator_traits<allocator_type>::construct(
+            alloc, new_node, std::forward<U>(value), head);
         head = new_node;
     }
 
-    bool empty() const { return head == nullptr; }
-};
+    bool empty() const {
+        return head == nullptr;
+    }
 
+    T& front() {
+        if (head) return head->value;
+        throw std::out_of_range("forward_list::front(): empty list");
+    }
+
+    const T& front() const {
+        if (head) return head->value;
+        throw std::out_of_range("forward_list::front(): empty list");
+    }
+
+    void pop_front() {
+        if (!head) return;
+        Node* temp = head;
+        head = head->next;
+        std::allocator_traits<allocator_type>::destroy(alloc, temp);
+        alloc.deallocate(temp, 1);
+    }
+};
 #endif
